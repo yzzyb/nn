@@ -53,6 +53,7 @@ class SVM:
             # 找出违反间隔条件的样本（margin < 1）
             idx = np.where(margin < 1)[0]
 
+            # 基于间隔违规样本计算梯度，结合L2正则化项，执行梯度下降更新
             # 计算梯度
             # L2正则化项 + 错误分类样本的平均梯度
             dw = (2 * self.reg_lambda * self.w) - np.mean(y[idx].reshape(-1, 1) * X[idx], axis=0)
@@ -61,6 +62,8 @@ class SVM:
             # 参数更新
             self.w -= self.learning_rate * dw
             self.b -= self.learning_rate * db
+
+            # 核心训练逻辑：对间隔违规样本梯度下降，优化间隔最大化目标
 
     def predict(self, x):
         """预测标签。"""
