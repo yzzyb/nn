@@ -11,9 +11,9 @@ except Exception as e:
     print(f"数据加载失败: {e}")
     
 
-learning_rate = 1e-4 #学习率
-keep_prob_rate = 0.7 # Dropout保留概率0.7
-max_epoch = 2000 #最大训练轮数2000
+learning_rate = 1e-4     #学习率
+keep_prob_rate = 0.7     #Dropout保留概率0.7
+max_epoch = 2000         #最大训练轮数2000
 
 
 def compute_accuracy(v_xs, v_ys):
@@ -191,12 +191,15 @@ prediction = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 cross_entropy = tf.reduce_mean(
     -tf.reduce_sum(ys * tf.log(prediction),reduction_indices=[1])
 )
+# 创建优化器 - Adam算法优化损失函数
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
 
+# 创建TensorFlow会话 - 执行计算图的上下文环境
 with tf.Session() as sess:
+    # 初始化所有全局变量（权重和偏置）
     init = tf.global_variables_initializer()
     sess.run(init)
-    
+
     # 模型训练循环
     for i in range(max_epoch):
         # 获取下一个训练批次

@@ -30,7 +30,7 @@ def multinomial_basis(x, feature_num=10):
         feat.append(x**i)
     # 将所有特征沿着第二维（axis=1）拼接起来
     ret = np.concatenate(feat, axis=1)
-    return ret
+    return ret # 返回一个二维数组，其中每一行是输入样本的多项式特征向量，列数为 feature_num
 
 
 def gaussian_basis(x, feature_num=10):
@@ -147,27 +147,31 @@ def predict(model, xs):
 
 def evaluate(ys, ys_pred):
     """评估模型。"""
-
-    std = np.std(ys - ys_pred)  # 计算预测误差的标准差
-
+    std = np.std(ys - ys_pred) # 计算预测误差的标准差
     return std
 
 
 # 评估指标的计算
-
-for i in range(1000):  # 进行1000次训练迭代
-    loss = train_one_step(model, xs, ys)  # 执行单步训练并获取当前损失值
+for i in range(1000): # 进行1000次训练迭代
+    loss = train_one_step(model, xs, ys) # 执行单步训练并获取当前损失值
     if i % 100 == 1: # 每100步打印一次损失值（从第1步开始：1, 101, 201, ...）
-        print(f"loss is {loss:.4}")   # `:.4` 表示保留4位有效数字
-                
-y_preds = predict(model, xs)
-std = evaluate(ys, y_preds)
-print("训练集预测值与真实值的标准差：{:.1f}".format(std))
+        print(f"loss is {loss:.4}")  # `:.4` 表示保留4位有效数字
 
+# 使用模型对训练集数据进行预测
+y_preds = predict(model, xs)
+# 打印测试集预测值与真实值的标准差
+std = evaluate(ys, y_preds)
+# 打印训练集预测值与真实值的标准差
+print("训练集预测值与真实值的标准差：{:.1f}".format(std)) # 格式化输出标准差，保留一位小数
+
+# 加载测试集数据
 (xs_test, ys_test), (o_x_test, o_y_test) = load_data("test.txt")
 
+# 使用模型对测试集数据进行预测
 y_test_preds = predict(model, xs_test)
+# 计算测试集预测值与真实值的标准差
 std = evaluate(ys_test, y_test_preds)
+# 打印测试集预测值与真实值的标准差
 print("训练集预测值与真实值的标准差：{:.1f}".format(std))
 
 # 绘制原始数据点：红色圆点标记，大小3
