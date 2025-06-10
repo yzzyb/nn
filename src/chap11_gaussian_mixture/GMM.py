@@ -5,7 +5,16 @@ import matplotlib.pyplot as plt
 
 # 生成混合高斯分布数据
 def generate_data(n_samples=1000):
-    np.random.seed(42)
+    """生成混合高斯分布数据集
+    
+    参数:
+        n_samples: 总样本数量 (默认=1000)
+    
+    返回:
+        X: 特征矩阵 (n_samples, 2)
+        y_true: 真实标签 (n_samples,)
+    """
+    np.random.seed(42)  # 固定随机种子以确保结果可复现
     # 定义三个高斯分布的中心点
     mu_true = np.array([ 
         [0, 0],  # 第一个高斯分布的均值
@@ -29,6 +38,12 @@ def generate_data(n_samples=1000):
     # 生成一个合成数据集，该数据集由多个多元正态分布的样本组成
     samples_per_component = (weights_true * n_samples).astype(int)
     
+    # 确保样本总数正确（由于浮点转换可能有误差）
+    total_samples = np.sum(samples_per_component)
+    if total_samples < n_samples:
+        # 将缺少的样本添加到权重最大的成分中
+        samples_per_component[np.argmax(weights_true)] += n_samples - total_samples
+    
     # 用于存储每个高斯分布生成的数据点
     X_list = []  
     
@@ -37,6 +52,7 @@ def generate_data(n_samples=1000):
     
     # 从第i个高斯分布生成样本
     for i in range(n_components): 
+        #生成多元正态分布样本
         X_i = np.random.multivariate_normal(mu_true[i], sigma_true[i], samples_per_component[i])
         # 将生成的样本添加到列表
         X_list.append(X_i) 
@@ -105,10 +121,12 @@ class GaussianMixtureModel:
 
     def fit(self, X):
         """使用EM算法训练模型
-        
-        参数:
-            X: array-like, shape=(n_samples, n_features)
-               输入数据矩阵
+
+        EM算法流程：
+        1. 初始化模型参数（混合权重π、均值μ、协方差矩阵Σ）
+        2. 重复以下步骤直到收敛：
+           - E步：计算每个样本属于各高斯成分的后验概率（责任度）
+           - M步：基于后验概率更新模型参数
         """
         X = np.asarray(X)
         n_samples, n_features = X.shape
@@ -227,15 +245,23 @@ class GaussianMixtureModel:
     
     def plot_convergence(self):
         """可视化对数似然的收敛过程"""
+        # 检查是否有对数似然值记录
         if not self.log_likelihoods:
             raise ValueError("请先调用fit方法训练模型")
-        
+
+        # 创建一个图形窗口，设置大小为10x6英寸
         plt.figure(figsize=(10, 6))
+        # 绘制对数似然值随迭代次数的变化曲线
+        # 使用蓝色实线绘制，范围从1到len(self.log_likelihoods)
         plt.plot(range(1, len(self.log_likelihoods) + 1), self.log_likelihoods, 'b-')
+        # 设置x轴标签为“迭代次数”
         plt.xlabel('迭代次数')
+        # 设置y轴标签为“对数似然值”
         plt.ylabel('对数似然值')
+        # 设置图表标题为“EM算法收敛曲线”
         plt.title('EM算法收敛曲线')
-        plt.grid(True)  # 启用网格线，增强可读性
+        # 启用网格线，增强可读性
+        plt.grid(True)  
         plt.show()
 
 # 主程序
