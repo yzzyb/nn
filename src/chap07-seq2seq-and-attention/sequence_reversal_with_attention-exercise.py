@@ -220,6 +220,9 @@ class mySeq2SeqModel(keras.Model):
 @tf.function
 def compute_loss(logits, labels):
     """计算模型预测的损失"""
+    # 计算稀疏softmax交叉熵损失（适用于分类任务）
+    # - logits: 模型输出的未归一化预测值（形状[batch_size, num_classes]）
+    # - labels: 真实标签（形状[batch_size]，每个元素是类别索引）
     losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=labels)
     losses = tf.reduce_mean(losses)
@@ -333,6 +336,7 @@ def sequence_reversal():
         
         # 逐步生成输出序列
         for i in range(steps):
+            # 获取下一个token和更新后的状态
             cur_token, state = model.get_next_token(cur_token, state, enc_out)
             collect.append(tf.expand_dims(cur_token, axis=-1))
         
