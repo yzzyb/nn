@@ -14,9 +14,9 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib import animation, rc
-from IPython.display import HTML
-import matplotlib.cm as cm
-import numpy as np
+from IPython.display import HTML # 在Jupyter中显示动画
+import matplotlib.cm as cm # 颜色映射
+import numpy as np # 数值计算库
 
 # get_ipython().run_line_magic('matplotlib', 'inline')  # 仅在Jupyter环境下需要
 
@@ -187,9 +187,9 @@ for i in range(1000):
 
 # 绘制三种不同类别的散点图
 # C1[:, 0] 和 C1[:, 1] 分别表示 C1 的第一列和第二列数据（通常是特征）
-plt.scatter(C1[:, 0], C1[:, 1], c="b", marker="+") # c="b" 设置颜色为蓝色，marker="+" 设置标记为加号
-plt.scatter(C2[:, 0], C2[:, 1], c="g", marker="o") # c="g" 设置颜色为绿色，marker="o" 设置标记为圆形
-plt.scatter(C3[:, 0], C3[:, 1], c="r", marker="*") # c="r" 设置颜色为红色，marker="*" 设置标记为星号
+plt.scatter(C1[:, 0], C1[:, 1], c="b", marker="+", s=80) # c="b" 设置颜色为蓝色，marker="+" 设置标记为加号
+plt.scatter(C2[:, 0], C2[:, 1], c="g", marker="o", s=80) # c="g" 设置颜色为绿色，marker="o" 设置标记为圆形
+plt.scatter(C3[:, 0], C3[:, 1], c="r", marker="*", s=80) # c="r" 设置颜色为红色，marker="*" 设置标记为星号
 
 # 创建网格点用于绘制决策边界
 x = np.arange(0.0, 10.0, 0.1)
@@ -211,10 +211,11 @@ Z = Z.reshape(X.shape)
 plt.contour(X, Y, Z, alpha=0.5)
 plt.show()
 
-# 保存模型权重
-model.save_weights('softmax_regression_weights')
+# 保存模型参数
+ckpt = tf.train.Checkpoint(model=model)
+ckpt.write('softmax_regression_weights')
 
-# 加载模型权重
-model.load_weights('softmax_regression_weights') # 模型权重加载后即可用于新数据的多类别概率预测
+# 加载模型参数
+ckpt.read('softmax_regression_weights')# 模型权重加载后即可用于新数据的多类别概率预测
 
 # In[ ]:

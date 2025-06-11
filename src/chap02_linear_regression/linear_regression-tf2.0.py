@@ -44,7 +44,7 @@ def gaussian_basis(x, feature_num=10):
     # 使用np.expand_dims在x的第1维度(axis=1)上增加一个维度以便广播计算
     x = np.expand_dims(x, axis=1)
     # 将x沿着第1维度(axis=1)复制feature_num次并连接使其与中心点数量匹配
-    x = np.concatenate([x] * feature_num, axis=1)
+    x = np.concatenate([x] * feature_num, axis=1) # 将 x 沿着第 1 维度复制 feature_num 次
     
     out = (x - centers) / width  # 计算每个样本点到每个中心点的标准化距离
     ret = np.exp(-0.5 * out ** 2)  # 对标准化距离应用高斯函数
@@ -121,7 +121,7 @@ class linearModel(Model):
         return y
 
 
-    (xs, ys), (o_x, o_y) = load_data("train.txt")    # 调用load_data函数      
+    (xs, ys), (o_x, o_y) = load_data("train.txt")    # 加载训练数据，调用load_data函数      
     ndim = xs.shape[1]  # 获取特征维度
 
     model = linearModel(ndim=ndim)  # 实例化线性模型
@@ -146,16 +146,12 @@ def train_one_step(model, xs, ys):
 @tf.function
 def predict(model, xs):
     # 使用模型对输入xs进行预测（前向传播）
-    y_preds = model(xs)  # 模型前向传播
-    
-    # 返回模型的预测结果
-    return y_preds
+    return model(xs)
 
 
 def evaluate(ys, ys_pred):
     """评估模型的性能"""
-    std = np.std(ys - ys_pred) # 计算预测误差的标准差
-    return std
+    return np.std(ys - ys_pred) # 计算预测误差的标准差
 
 
 # 评估指标的计算
@@ -179,7 +175,7 @@ y_test_preds = predict(model, xs_test)
 # 计算测试集预测值与真实值的标准差
 std = evaluate(ys_test, y_test_preds)
 # 打印测试集预测值与真实值的标准差
-print("训练集预测值与真实值的标准差：{:.1f}".format(std))
+print("测试集预测值与真实值的标准差：{:.1f}".format(std))
 
 # 绘制原始数据点：红色圆点标记，大小3
 # o_x: 原始数据X坐标

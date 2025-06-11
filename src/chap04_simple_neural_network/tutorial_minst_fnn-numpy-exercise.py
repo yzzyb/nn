@@ -3,8 +3,6 @@
 # ## 准备数据
 # In[1]:
 
-# 导入操作系统接口模块，提供与操作系统交互的功能
-import os
 # 导入 NumPy 数值计算库，用于高效处理多维数组和矩阵运算
 import numpy as np
 # 导入 TensorFlow 深度学习框架
@@ -98,6 +96,7 @@ class Softmax:
     def __init__(self):
         # 初始化类实例的基础参数和状态容器
         self.epsilon = 1e-12
+        # 初始化一个空字典 mem，用于存储中间计算结果（如缓存），避免重复计算。
         self.mem = {}
 
     def forward(self, x):
@@ -295,16 +294,18 @@ with tf.GradientTape() as tape:
     x, W1, W2, label = tf.constant(x), tf.constant(W1), tf.constant(W2), tf.constant(label)
     tape.watch(W1)        # 追踪 W1 的梯度
     tape.watch(W2)        # 追踪 W2 的梯度
+    # 第一层线性变换：输入x与权重W1做矩阵乘法
     h1 = tf.matmul(x, W1)
+    # 对第一层输出应用ReLU激活函数
     h1_relu = tf.nn.relu(h1)
     h2 = tf.matmul(h1_relu, W2)
     prob = tf.nn.softmax(h2)
     log_prob = tf.math.log(prob)
     loss = tf.reduce_sum(label * log_prob)
     # 计算负对数似然损失(Negative Log Likelihood Loss)
-    grads = tape.gradient(loss, [prob])
-    print(grads[0].numpy())
-
+    grads = tape.gradient(loss, [W1, W2])
+    print("W1 Gradient Check:", grads[0].numpy())
+    print("W2 Gradient Check:", grads[1].numpy())
 
 # ## 建立模型
 
@@ -353,7 +354,24 @@ model = myModel()
 # In[11]:
 
 def compute_loss(log_prob, labels):
-    return np.mean(np.sum(-log_prob * labels, axis=1))
+    """
+    计算交叉熵损失的均值。
+    
+    参数:
+    - log_prob: numpy.ndarray
+        形状为 (N, C) 的数组，表示每个样本属于每个类别的对数概率（log-probabilities）。
+        通常来自模型输出并经过 log_softmax 处理。
+    - labels: numpy.ndarray
+        形状为 (N, C) 的 one-hot 编码标签数组，每个样本对应一个类别分布。
+
+    返回:
+    - loss: float
+        所有样本的平均交叉熵损失。
+        
+    数学公式:
+        loss = - (1/N) * ΣΣ y_ij * log(p_ij)
+    """
+    return -np.mean(np.sum(labels * log_prob, axis=1))
 
 
 def compute_accuracy(log_prob, labels):

@@ -36,6 +36,7 @@ def generate_data(n_samples=1000):
     n_components = len(weights_true)
     
     # 生成一个合成数据集，该数据集由多个多元正态分布的样本组成
+    # 计算每个分布应生成的样本数（浮点转整数可能有误差）
     samples_per_component = (weights_true * n_samples).astype(int)
     
     # 确保样本总数正确（由于浮点转换可能有误差）
@@ -56,10 +57,10 @@ def generate_data(n_samples=1000):
         X_i = np.random.multivariate_normal(mu_true[i], sigma_true[i], samples_per_component[i])
         # 将生成的样本添加到列表
         X_list.append(X_i) 
-        # 添加对应标签
+        # 添加对应标签（0、1、2表示三个分布）
         y_true.extend([i] * samples_per_component[i]) 
     
-    # 合并并打乱数据
+    # 合并并打乱数据并打乱顺序（模拟无标签数据）
     # 将多个子数据集合并为一个完整数据集
     X = np.vstack(X_list)  
     # 将Python列表转换为NumPy数组
@@ -96,8 +97,9 @@ def logsumexp(log_p, axis=1, keepdims=False):
         return max_val.copy() if keepdims else max_val.squeeze(axis=axis)  # 根据keepdims返回适当形式
     
     # 计算修正后的指数和（处理-inf输入）
+     # 安全计算指数和：先减去最大值，再计算指数
     safe_log_p = np.where(np.isneginf(log_p), -np.inf, log_p - max_val)  # 安全调整对数概率
-    sum_exp = np.sum(np.exp(safe_log_p), axis=axis, keepdims=keepdims)  # 计算调整后的指数和
+    sum_exp = np.sum(np.exp(safe_log_p), axis = axis, keepdims = keepdims)  # 计算调整后的指数和
     
     # 计算最终结果
     result = max_val + np.log(sum_exp)
@@ -117,7 +119,7 @@ class GaussianMixtureModel:
         tol: float, 收敛阈值 (默认=1e-6)
         random_state: int, 随机种子 (可选)
     """
-    def __init__(self, n_components=3, max_iter=100, tol=1e-6 tol=1e-6, random_state=None):
+    def __init__(self, n_components = 3, max_iter = 100, tol = 1e-6 tol = 1e-6, random_state = None):
         # 初始化模型参数
         self.n_components = n_components  # 高斯分布数量
         self.max_iter = max_iter          # EM算法最大迭代次数
@@ -256,6 +258,11 @@ class GaussianMixtureModel:
         # 返回对数概率密度
         # 公式：log_p(x) = -0.5*D*log(2π) - 0.5*log|Σ| - 0.5*(x-μ)^T·Σ^(-1)·(x-μ)
         return -0.5 * n_features * np.log(2 * np.pi) - 0.5 * logdet + exponent
+    else:
+        # 处理非奇异协方差矩阵
+        inv = np.linalg.inv(sigma)
+        exponent = -0.5 * np.einsum('...i,...i->...', X_centered @ inv, X_centered)
+        return -0.5 * n_features * np.log(2 * np.pi) - 0.5 * logdet + exponent
     
     def plot_convergence(self):
         """可视化对数似然的收敛过程"""
@@ -275,7 +282,7 @@ class GaussianMixtureModel:
         # 设置图表标题为“EM算法收敛曲线”
         plt.title('EM算法收敛曲线')
         # 启用网格线，增强可读性
-        plt.grid(True)  
+        plt.grid(True, alpha=0.5) 
         plt.show()
 
 # 主程序
@@ -324,7 +331,8 @@ if __name__ == "__main__":
     plt.ylabel("特征2", fontsize=10)      # 设置y轴标签及字体大小
     plt.grid(True, linestyle='--', alpha=0.5) # 添加网格线：
     
-    plt.tight_layout()
-    plt.savefig('gmm_clustering_results.png', dpi=300)# 保存图形为 PNG 文件，分辨率为 300 DPI
-    plt.show()
+
+    plt.tight_layout()                                  # 自动调整子图参数，确保图形元素不重叠
+    plt.savefig('gmm_clustering_results.png', dpi=300)  # 保存高分辨率（300 DPI）的GMM聚类结果图像
+    plt.show()                                          # 显示绘制的图形窗口
     print("程序执行完毕")

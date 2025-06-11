@@ -60,6 +60,7 @@ def softmax_ce(logits, label):
     '''实现 softmax 交叉熵loss函数， 不允许用tf自带的softmax_cross_entropy函数'''
     # 参数logits: 未经Softmax的原始输出（logits）
     # 参数label: one-hot格式的标签
+    # 定义一个极小值epsilon（1e-8），用于数值稳定性，防止log(0)的情况
     epsilon = 1e-8
     logits = tf.cast(logits, tf.float32)
     label = tf.cast(label, tf.float32)
@@ -70,16 +71,18 @@ def softmax_ce(logits, label):
     exp_logits = tf.exp(stable_logits)
     prob = exp_logits / tf.reduce_sum(exp_logits, axis=-1, keepdims=True)
     # 计算交叉熵
-    loss = -tf.reduce_mean(tf.reduce_sum(label * tf.math.log(prob + epsilon), axis=1))
+    loss = -tf.reduce_mean(
+        tf.reduce_sum(label * tf.math.log(prob + epsilon), axis=1)
+    )
     ##########
     return loss
 
 # 生成测试数据，形状为 [10, 5] 的正态随机数
 test_data = np.random.normal(size=[10, 5]).astype(np.float32)
 # 进行softmax转换
-prob = tf.nn.softmax(test_data)
-# 生成标签，每个样本只有一个类别为 1
-label = np.zeros_like(test_data, dtype=np.float32)
+# 正确测试逻辑：直接使用原始logits
+test_logits = np.random.normal(size=[10, 5]).astype(np.float32)
+label = np.zeros_like(test_logits, dtype=np.float32)
 label[np.arange(10), np.random.randint(0, 5, size=10)] = 1.0
 # 比较自定义的损失值和tf自带结果，误差小于 0.0001 则认为相等
 

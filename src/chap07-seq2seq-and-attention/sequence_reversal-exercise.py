@@ -11,19 +11,19 @@
 # 标准库（Python内置模块，按字母顺序排列）
 import collections
 import os # 导入os库
-import sys
-import tqdm  # 虽然tqdm是第三方库，但常作为工具库放在标准库后
+import sys # 导入sys库，用于系统相关参数和函数
+import tqdm  # 虽然tqdm是第三方库，但常作为工具库放在标准库后，用于显示循环进度
 
 # 第三方库（按字母顺序排列，优先导入独立库，再导入子模块）
 import numpy as np# 导入NumPy库（科学计算基础库）
                     # 提供多维数组操作、数学函数、线性代数等功能
                     # 常用于数据预处理、模型输入构建和结果分析
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import datasets, layers, optimizers
+import tensorflow as tf # 导入TensorFlow深度学习框架
+from tensorflow import keras # 从TensorFlow导入Keras高级API
+from tensorflow.keras import datasets, layers, optimizers # 导入Keras的子模块
 # 同一库的子模块合并导入，按字母顺序排列
-import random
-import string
+import random # 导入随机数生成模块，用于生成随机数、随机序列等
+import string # 导入字符串常量模块，提供常用的字符串集合（如字母表、数字等）
 
 # ## 玩具序列数据生成
 # 生成只包含[A-Z]的字符串，并且将encoder输入以及decoder输入以及decoder输出准备好（转成index）
@@ -45,7 +45,7 @@ def random_string(length):
     # 步骤 2：使用 random.choices() 一次性生成指定长度的随机字符串
     # random.choices() 可以直接生成包含多个随机字符的列表
     # 然后使用 ''.join() 将列表中的字符拼接成字符串
-    return ''.join(random.choices(letters, k=length))
+    return ''.join(random.choices(letters, k = length))
 
 def get_batch(batch_size, length):
     # 生成batch_size个随机字符串
@@ -63,9 +63,9 @@ def get_batch(batch_size, length):
 # 3. dec_x: 解码器输入序列（通常包含起始标记），形状为 [batch_size, dec_seq_len]
 # 4. y: 目标输出序列（通常包含结束标记），形状为 [batch_size, dec_seq_len]
     return (batched_examples,
-            tf.constant(enc_x, dtype=tf.int32), 
-            tf.constant(dec_x, dtype=tf.int32), 
-            tf.constant(y, dtype=tf.int32))
+            tf.constant(enc_x, dtype = tf.int32), 
+            tf.constant(dec_x, dtype = tf.int32), 
+            tf.constant(y, dtype = tf.int32))
 #测试
 print(get_batch(2, 10))
 
@@ -79,6 +79,7 @@ print(get_batch(2, 10))
 class mySeq2SeqModel(keras.Model):
     def __init__(self):
         # 初始化父类 keras.Model，必须调用
+       """初始化Seq2Seq模型组件"""
         super().__init__()
 
         # 词表大小为27：A-Z共26个大写字母，加上1个特殊的起始符（用0表示）
@@ -158,8 +159,9 @@ class mySeq2SeqModel(keras.Model):
         enc_out, enc_state = self.encoder(enc_emb)
 
         # 返回编码器最后一个时间步的输出和最终状态
-        return [enc_out[:, -1, :], enc_state]
-    
+        # 返回完整的编码器输出和最终状态
+        return enc_out, enc_state
+
     def get_next_token(self, x, state):
        '''
     根据当前输入和状态生成下一个token
@@ -291,7 +293,7 @@ def sequence_reversal():
     """
     def decode(init_state, steps=10):
         # 获取批次大小
-        b_sz = tf.shape(init_state[0])[0]
+        batch_size = tf.shape(init_state)[0]
         # 起始 token（全为 0）
         cur_token = tf.zeros(shape=[b_sz], dtype=tf.int32)
         # 初始化状态为编码器输出的状态
