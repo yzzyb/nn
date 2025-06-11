@@ -125,13 +125,14 @@ def max_pool_2x2(x: tf.Tensor,
 ) -> tf.Tensor:
     # 验证参数合法性
     if padding not in ['SAME', 'VALID']:
-        raise ValueError(f"padding must be 'SAME' or 'VALID', got {padding}.")
+        raise ValueError(f"padding must be 'SAME' or 'VALID', got {padding}.")            # 验证padding参数
     if data_format not in ['NHWC', 'NCHW']:
-        raise ValueError(f"data_format must be 'NHWC' or 'NCHW', got {data_format}.")
-    # 验证数据格式参数是否符合TensorFlow规范
+        raise ValueError(f"data_format must be 'NHWC' or 'NCHW', got {data_format}.")     # 验证data_format参数
     
     # 构造池化核和步长参数
     if data_format == 'NHWC':
+        # NHWC格式：[batch, height, width, channels]
+        # 池化核大小和步长都作用于height和width维度
         ksize = [1, pool_size, pool_size, 1]
         strides = [1, strides, strides, 1]
     else:  # NCHW

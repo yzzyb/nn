@@ -58,6 +58,7 @@ def load_data(filename, basis_func=gaussian_basis):
     xys = []
     with open(filename, "r") as f:
         for line in f:
+            # 读取每一行数据，并将其转换为列表
             # 改进: 转换为list
             xys.append(list(map(float, line.strip().split()))) # 读取每行数据
         xs, ys = zip(*xys) # 解压为特征和标签
@@ -65,7 +66,8 @@ def load_data(filename, basis_func=gaussian_basis):
         o_x, o_y = xs, ys # 保存原始数据
         phi0 = np.expand_dims(np.ones_like(xs), axis=1) # 添加偏置项（全1列）
         phi1 = basis_func(xs) # 应用基函数变换
-        xs = np.concatenate([phi0, phi1], axis=1) # 拼接偏置和变换后的特征
+        xs = np.concatenate([phi0, phi1], axis=1) 
+        # 拼接偏置和变换后的特征
         return (np.float32(xs), np.float32(ys)), (o_x, o_y)# 返回处理好的训练数据和原始数据
 
 
@@ -97,12 +99,12 @@ class linearModel(Model):
         )
         
         # 注意：代码中缺少偏置项 b，完整的线性模型通常需要包含偏置
-        # 可补充：
-        # self.b = tf.Variable(
-        #     initial_value=tf.zeros([1]),
-        #     trainable=True,
-        #     name="bias"
-        # )
+        # 偏置项 b，形状为 [1]
+        self.b = tf.Variable(
+            initial_value=tf.zeros([1], dtype=tf.float32),
+            trainable=True,
+            name="bias"
+        )
         
     @tf.function
     def call(self, x):
