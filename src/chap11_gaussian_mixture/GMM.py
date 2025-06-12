@@ -99,7 +99,7 @@ def logsumexp(log_p, axis=1, keepdims=False):
     # 计算修正后的指数和（处理-inf输入）
      # 安全计算指数和：先减去最大值，再计算指数
     safe_log_p = np.where(np.isneginf(log_p), -np.inf, log_p - max_val)  # 安全调整对数概率
-    sum_exp = np.sum(np.exp(safe_log_p), axis = axis, keepdims = keepdims)  # 计算调整后的指数和
+    sum_exp = np.sum(np.exp(safe_log_p), axis=axis, keepdims=keepdims)  # 计算调整后的指数和
     
     # 计算最终结果
     result = max_val + np.log(sum_exp)
