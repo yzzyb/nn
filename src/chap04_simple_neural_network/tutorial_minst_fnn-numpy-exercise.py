@@ -275,7 +275,7 @@ log = Log()                         # 对数函数
 h1 = mul_h1.forward(x, W1)  # shape(5, 4)
 h1_relu = relu.forward(h1)  # 对第一层输出h1应用ReLU激活函数（保留正值，负值置0）
 h2 = mul_h2.forward(h1_relu, W2)
-h2_soft = softmax.forward(h2)
+h2_soft = softmax.forward(h2) # 将logits转换为概率分布（[5,6]）
 h2_log = log.forward(h2_soft)
 # 手动实现的反向传播过程（计算梯度）：
 # 反向传播流程（从后向前）：
@@ -284,7 +284,7 @@ h2_soft_grad = softmax.backward(h2_log_grad)      # Softmax梯度
 h2_grad, W2_grad = mul_h2.backward(h2_soft_grad)  # 第二层权重梯度
 h1_relu_grad = relu.backward(h2_grad)             # ReLU梯度
 h1_grad, W1_grad = mul_h1.backward(h1_relu_grad)  # 第一层权重梯度
-
+# 打印手动实现的反向传播梯度结果（h2_log的梯度）
 print(h2_log_grad)
 print('--' * 20)
 # print(W2_grad)
@@ -292,6 +292,7 @@ print('--' * 20)
 with tf.GradientTape() as tape:
     # 将数据转换为 TensorFlow 常量
     x, W1, W2, label = tf.constant(x), tf.constant(W1), tf.constant(W2), tf.constant(label)
+    # 将NumPy数组转换为TensorFlow常量（不可变张量）
     tape.watch(W1)        # 追踪 W1 的梯度
     tape.watch(W2)        # 追踪 W2 的梯度
     # 第一层线性变换：输入x与权重W1做矩阵乘法
@@ -375,8 +376,24 @@ def compute_loss(log_prob, labels):
 
 
 def compute_accuracy(log_prob, labels):
+    """
+    计算模型预测准确率。
+    
+    参数:
+    - log_prob: 对数概率，通常是模型输出经过 log_softmax 后的结果，形状为 (batch_size, num_classes)
+    - labels: 真实标签，可以是 one-hot 编码形式，形状为 (batch_size, num_classes)
+    
+    返回:
+    - 准确率（正确预测的比例）
+    """
+    
+    # 获取每个样本的预测类别编号（取对数概率最大的类别作为预测）
     predictions = np.argmax(log_prob, axis=1)
+    
+    # 获取真实标签对应的类别编号（如果是 one-hot 编码，也用 argmax 转换为类别编号）
     truth = np.argmax(labels, axis=1)
+    
+    # 比较预测结果与真实标签，计算正确率（布尔值数组的均值即为准确率）
     return np.mean(predictions == truth)
 
 
