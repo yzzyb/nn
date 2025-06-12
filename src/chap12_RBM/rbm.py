@@ -1,12 +1,13 @@
 # python: 2.7
 # encoding: utf-8
 # 导入numpy模块并命名为np
-import numpy as np # 导入NumPy库用于高效数值计算
+import numpy as np  # 导入NumPy库用于高效数值计算
 import sys
+
 class RBM:
     """Restricted Boltzmann Machine.（受限玻尔兹曼机）"""
 
-    def __init__(self, n_hidden = 2, n_observe = 784):
+    def __init__(self, n_hidden=2, n_observe=784):
         """
         初始化受限玻尔兹曼机（RBM）模型参数
 
@@ -70,7 +71,7 @@ class RBM:
         """Sigmoid激活函数，用于将输入映射到概率空间
         将任意实数映射到(0,1)区间，适合表示神经元的激活概率
         """
-        return 1.0 / (1 + np.exp(-x)) # 计算Sigmoid函数的值，公式为1 / (1 + e^(-x))，将输入x映射到(0,1)区间
+        return 1.0 / (1 + np.exp(-x))  # 计算Sigmoid函数的值，公式为1 / (1 + e^(-x))，将输入x映射到(0,1)区间
 
     def _sample_binary(self, probs):
         """伯努利采样：根据给定概率生成0或1（用于模拟神经元激活）
@@ -112,11 +113,11 @@ class RBM:
         n_samples = data_flat.shape[0]  # 样本数量
 
         # 定义训练参数
-        learning_rate = 0.1 # 学习率，控制参数更新的步长
+        learning_rate = 0.1  # 学习率，控制参数更新的步长
         
-        epochs = 10 # 训练轮数，整个数据集将被遍历10次
+        epochs = 10  # 训练轮数，整个数据集将被遍历10次
         
-        batch_size = 100 # 批处理大小，每次更新参数使用的样本数量
+        batch_size = 100  # 批处理大小，每次更新参数使用的样本数量
 
         # 开始训练轮数
         for epoch in range(epochs):
@@ -144,7 +145,7 @@ class RBM:
                 v1_prob = self._sigmoid(np.dot(h0_sample, self.W.T) + self.b_v)  # 将上述结果传入 Sigmoid 激活函数进行非线性变换，得到最终的概率值 v1_prob
                 
                 # 对可见层重构概率进行二值采样，得到重构的可见层状态
-                v1_sample = self._sample_binary(v1_prob)        # 对可见层进行二值采样
+                v1_sample = self._sample_binary(v1_prob)  # 对可见层进行二值采样
                 
                 # 基于重构的可见层状态，再次计算隐藏层激活概率
                 h1_prob = self._sigmoid(np.dot(v1_sample, self.W) + self.b_h)       # 计算隐藏单元被激活的概率
@@ -201,9 +202,9 @@ if __name__ == '__main__':
         mnist = np.load('mnist_bin.npy')  # 尝试加载文件
     except IOError:
         # 如果文件不存在或加载失败，生成新的二值化MNIST数据
-        (train_images, _), (_, _) = mnist.load_data() # 加载MNIST数据
-        mnist_bin = (train_images >= 128).astype(np.int8) # 二值化处理
-        np.save('mnist_bin.npy', mnist_bin) # 保存为.npy文件
+        (train_images, _), (_, _) = mnist.load_data()  # 加载MNIST数据
+        mnist_bin = (train_images >= 128).astype(np.int8)  # 二值化处理
+        np.save('mnist_bin.npy', mnist_bin)  # 保存为.npy文件
         # 重新加载刚生成的文件
         mnist = np.load('mnist_bin.npy')
     except Exception as e:
@@ -213,8 +214,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # 获取数据集的形状信息
-    n_imgs, n_rows, n_cols = mnist.shape# 分别表示图像数量、行数和列数
-    img_size = n_rows * n_cols  # 计算单张图片展开后的长度
+    n_imgs, n_rows, n_cols = mnist.shape  # 分别表示图像数量、行数和列数
+    img_size = n_rows * n_cols            # 计算单张图片展开后的长度
 
     # 打印数据集的形状信息，便于确认数据加载是否正确
     print(mnist.shape)  # 输出数据集的形状
