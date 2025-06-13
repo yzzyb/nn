@@ -34,7 +34,7 @@ random_conv = MyConvModel()# 实例化一个新的卷积神经网络模型
 img = Image.open(open('corgi.jpg', 'rb'))  # 返回PIL.Image对象
 
 # 将PIL图像转换为numpy数组，并指定数据类型为float64
-img = np.asarray(img, dtype='float64') / 256. 
+img = np.asarray(img, dtype='float32') / 255.0  # 归一化到0-1范围，使用float32更高效
 
 # 在数组的第0维添加一个维度（批处理维度）
 # 将形状从[H,W,C]变为[1,H,W,C]，符合模型输入要求
@@ -46,8 +46,8 @@ img_out = random_conv(img)  # 输出形状保持[1,H,W,C]
 
 #使用pylab（通常是matplotlib.pyplot的别名）来创建一个包含四个子图的图形，并显示图像数据。
 pylab.figure(figsize=(10, 7))# 创建一个绘图窗口，并设置图像显示的画布大小为 10x7 英寸
-pylab.subplot(2, 2, 1); pylab.axis('off'); pylab.imshow(img[0, :, :, :])# 第一个子图：绘制原始输入图像
-pylab.subplot(2, 2, 2); pylab.axis('off'); pylab.imshow(img_out[0, :, :, 0])# 第二个子图：显示输出图像的第一个通道（feature map）
-pylab.subplot(2, 2, 3); pylab.axis('off'); pylab.imshow(img_out[0, :, :, 1])# 第三个子图：显示输出图像的第二个通道（feature map）
-pylab.subplot(2, 2, 4); pylab.axis('off'); pylab.imshow(img_out[0, :, :, 2])# 第四个子图：显示输出图像的第三个通道（feature map）
-pylab.show()# 显示所有绘制的图像
+pylab.subplot(2, 2, 1); pylab.axis('off'); pylab.imshow(img[0, :, :, :])        # 第一个子图：绘制原始输入图像
+pylab.subplot(2, 2, 2); pylab.axis('off'); pylab.imshow(img_out[0, :, :, 0])    # 第二个子图：显示输出图像的第一个通道（feature map）
+pylab.subplot(2, 2, 3); pylab.axis('off'); pylab.imshow(img_out[0, :, :, 1])    # 第三个子图：显示输出图像的第二个通道（feature map）
+pylab.subplot(2, 2, 4); pylab.axis('off'); pylab.imshow(img_out[0, :, :, 2])    # 第四个子图：显示输出图像的第三个通道（feature map）
+pylab.show()                                                                    # 显示所有绘制的图像

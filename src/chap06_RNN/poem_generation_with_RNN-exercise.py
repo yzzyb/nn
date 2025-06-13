@@ -93,7 +93,7 @@ def poem_dataset():
     # 批处理并填充到相同长度
     ds = ds.padded_batch(100, padded_shapes=(tf.TensorShape([None]), tf.TensorShape([])))
     # 为语言模型准备输入输出对：输入是前n-1个词，输出是后n-1个词
-    ds = ds.map(lambda x, seqlen: (x[:, :-1], x[:, 1:], seqlen-1))
+    ds = ds.map(lambda x, seqlen: (x[:, :-1], x[:, 1:], seqlen-1)) # 对数据集中的每个元素应用映射函数
     return ds, word2id, id2word
 
 
@@ -251,6 +251,8 @@ def reduce_avg(reduce_target, lengths, dim):
     # 将掩码应用到目标张量上
     mask = tf.reshape(mask, shape=mask_shape)
 
+    # 应用掩码：将目标张量中超出序列长度的位置置零
+    # 通过类型转换确保掩码与目标张量数据类型一致
     mask_target = reduce_target * tf.cast(mask, dtype=reduce_target.dtype)
     if len(shape_of_lengths) != dim: # 验证 lengths 的维度是否等于 dim
         raise ValueError(('Second input tensor should be rank %d, ' +
@@ -259,7 +261,7 @@ def reduce_avg(reduce_target, lengths, dim):
         raise ValueError(('First input tensor should be at least rank %d, ' +
                          'while it got rank %d') % (dim+1, len(shape_of_target)))
 
-    rank_diff = len(shape_of_target) - len(shape_of_lengths) - 1
+    rank_diff = len(shape_of_target) - len(shape_of_lengths) - 1 # 计算形状差异：目标张量的维度数减去长度张量的维度数再减1
     mxlen = tf.shape(reduce_target)[dim]  # 获取当前维度的最大长度 mxlen
     mask = mkMask(lengths, mxlen)
     

@@ -104,7 +104,7 @@ optimizer = optimizers.Adam(0.0001)
 # In[4]:
 model.compile(
     optimizer = optimizer,# 使用预定义的优化器（如Adam、SGD）更新模型参数
-    loss = 'sparse_categorical_crossentropy',
+    loss = 'sparse_categorical_crossentropy', # 稀疏分类交叉熵损失函数
     metrics = ['accuracy']# 训练和评估时监控准确率指标
 )
 # 加载 MNIST 数据集，并将其分为训练集和测试集。
@@ -119,4 +119,5 @@ model.fit(train_ds, epochs=5)
 # 在测试数据集上评估模型性能。
 # evaluate 方法会计算并返回模型在测试数据集上的损失值和评估指标（例如准确率）。
 # 这一步骤用来验证模型的泛化能力，确保模型不仅仅是在训练集上表现良好。
-model.evaluate(test_ds)
+# 在测试集上评估模型，批次大小设为100
+model.evaluate(test_ds, batch_size=100)
