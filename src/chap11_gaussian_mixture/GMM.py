@@ -260,9 +260,9 @@ class GaussianMixtureModel:
             return -0.5 * n_features * np.log(2 * np.pi) - 0.5 * logdet + exponent
         else:
             # 处理非奇异协方差矩阵
-            inv = np.linalg.inv(sigma)
-            exponent = -0.5 * np.einsum('...i,...i->...', X_centered @ inv, X_centered)
-            return -0.5 * n_features * np.log(2 * np.pi) - 0.5 * logdet + exponent
+            inv = np.linalg.inv(sigma) #计算协方差矩阵的逆
+            exponent = -0.5 * np.einsum('...i,...i->...', X_centered @ inv, X_centered) #计算指数部分（二次型）
+            return -0.5 * n_features * np.log(2 * np.pi) - 0.5 * logdet + exponent #组合对数概率密度
         
     def plot_convergence(self):
         """可视化对数似然的收敛过程"""
@@ -275,11 +275,11 @@ class GaussianMixtureModel:
         # 绘制对数似然值随迭代次数的变化曲线
         # 使用蓝色实线绘制，范围从1到len(self.log_likelihoods)
         plt.plot(range(1, len(self.log_likelihoods) + 1), self.log_likelihoods, 'b-')
-        # 设置x轴标签为“迭代次数”
+        # 设置x轴的标签为“迭代次数”
         plt.xlabel('迭代次数')
-        # 设置y轴标签为“对数似然值”
+        # 设置y轴的标签为“对数似然值”
         plt.ylabel('对数似然值')
-        # 设置图表标题为“EM算法收敛曲线”
+        # 设置图表的标题为“EM算法收敛曲线”
         plt.title('EM算法收敛曲线')
         # 启用网格线，增强可读性
         plt.grid(True, alpha=0.5) 
@@ -300,21 +300,25 @@ if __name__ == "__main__":
      #
      
     # 可视化结果
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(12, 5))#创建图形和子图
     plt.subplot(1, 2, 1)
-    plt.scatter(X[:, 0], X[:, 1], c=y_true, cmap='viridis', s=10)
+    plt.scatter(X[:, 0], X[:, 1], c=y_true, cmap='viridis', s=10)#绘制散点图，x 轴为 X 的第一列（Feature 1），y 轴为 X 的第二列（Feature 2）；点颜色由 y_true 决定（真实聚类标签）
+    # 使用 viridis 颜色映射；s=10 设置点的大小为 10
     plt.title("True Clusters")
+    # 注意：此处重复设置标题是为了确保在某些环境中标题能够正确显示
     plt.title("True Clusters")
     plt.xlabel("Feature 1")
     plt.ylabel("Feature 2")
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.subplot(1, 2, 2)
-    plt.scatter(X[:, 0], X[:, 1], c=y_pred, cmap='viridis', s=10)
+    plt.scatter(X[:, 0], X[:, 1], c=y_pred, cmap='viridis', s=10)#绘制散点图，x 轴和 y 轴与第一个子图相同。点颜色由 y_pred 决定（GMM 预测的聚类标签），
+    # 使用相同的 viridis 颜色映射。点大小同样为 10。
     plt.title("GMM Predicted Clusters")
     plt.xlabel("Feature 1")
     plt.ylabel("Feature 2")
     plt.grid(True, linestyle='--', alpha=0.7)
-    plt.show()
+    plt.show()#显示创建的图形窗口
+    #打印信息
     print("生成混合高斯分布数据...")
     print("生成混合高斯分布数据...")
     print("生成混合高斯分布数据...")

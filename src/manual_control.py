@@ -103,6 +103,7 @@ import weakref
 
 try:
     import pygame    # 导入Pygame图形界面库（用于创建HUD和控制器）
+    # 从pygame.locals导入键盘常量（用于处理键盘输入事件）
     from pygame.locals import KMOD_CTRL
     from pygame.locals import KMOD_SHIFT
     from pygame.locals import K_0
@@ -813,21 +814,26 @@ class HUD(object):
 
     def tick(self, world, clock):
         self._notifications.tick(world, clock)
+        # 如果不显示HUD信息则直接返回
         if not self._show_info:
             return
-        t = world.player.get_transform()
+        t = world.player.get_transform()# 获取玩家车辆的当前变换信息
         v = world.player.get_velocity()# 获取车辆速度
-        c = world.player.get_control()
+        c = world.player.get_control()# 获取玩家车辆的控制输入
+        # 处理罗盘数据获取基本方位
         compass = world.imu_sensor.compass
         heading = 'N' if compass > 270.5 or compass < 89.5 else ''#一种简易方向判断逻辑
         heading += 'S' if 90.5 < compass < 269.5 else ''
         heading += 'E' if 0.5 < compass < 179.5 else ''
         heading += 'W' if 180.5 < compass < 359.5 else ''
+        # 获取碰撞历史数据
         colhist = world.collision_sensor.get_collision_history()
+        # 提取最近200帧的碰撞强度数据
         collision = [colhist[x + self.frame - 200] for x in range(0, 200)]
+        # 归一化碰撞数据(缩放到0-1范围)
         max_col = max(1.0, max(collision))
         collision = [x / max_col for x in collision]
-        vehicles = world.world.get_actors().filter('vehicle.*')
+        vehicles = world.world.get_actors().filter('vehicle.*')# 获取世界中的所有车辆
         self._info_text = [
             'Server:  % 16.0f FPS' % self.server_fps,
             'Client:  % 16.0f FPS' % clock.get_fps(),
@@ -899,23 +905,31 @@ class HUD(object):
         # 显示红色错误提示
         self._notifications.set_text('Error: %s' % text, (255, 0, 0))
 
+    # 将HUD信息渲染到指定显示表面
     def render(self, display):
         if self._show_info:
+            # 创建一个半透明的信息背景表面 (宽度220，高度与HUD相同)
             info_surface = pygame.Surface((220, self.dim[1]))
-            info_surface.set_alpha(100)
-            display.blit(info_surface, (0, 0))
+            info_surface.set_alpha(100)# 设置透明度为100
+            display.blit(info_surface, (0, 0))# 将背景绘制到显示表面左上角
             v_offset = 4
             bar_h_offset = 100
             bar_width = 106
+            
+            # 遍历所有信息文本项
             for item in self._info_text:
                 if v_offset + 18 > self.dim[1]:
                     break
+                    
+                # 处理列表类型项
                 if isinstance(item, list):
                     if len(item) > 1:
                         points = [(x + 8, v_offset + 8 + (1.0 - y) * 30) for x, y in enumerate(item)]
                         pygame.draw.lines(display, (255, 136, 0), False, points, 2)
                     item = None
                     v_offset += 18
+
+                # 处理元组类型项
                 elif isinstance(item, tuple):
                     if isinstance(item[1], bool):
                         rect = pygame.Rect((bar_h_offset, v_offset + 8), (6, 6))
@@ -929,10 +943,10 @@ class HUD(object):
                         else:
                             rect = pygame.Rect((bar_h_offset, v_offset + 8), (f * bar_width, 6))
                         pygame.draw.rect(display, (255, 255, 255), rect)
-                    item = item[0]
+                    item = item[0] # 提取元组中的文本内容
                 if item:  # At this point has to be a str.
-                    surface = self._font_mono.render(item, True, (255, 255, 255))
-                    display.blit(surface, (8, v_offset))
+                    surface = self._font_mono.render(item, True, (255, 255, 255))# 使用等宽字体渲染白色文本
+                    display.blit(surface, (8, v_offset))# 将文本绘制到显示表面 (左侧8像素偏移)
                 v_offset += 18
         self._notifications.render(display)
         self.help.render(display)
@@ -944,27 +958,68 @@ class HUD(object):
 
 
 class FadingText(object):
+    """
+       用于显示渐隐文本的类。
+
+       该类用于在屏幕上显示一段文本，并在指定的时间内逐渐淡出。
+       主要功能包括：
+       - 初始化文本的字体、尺寸和位置。
+       - 设置文本内容、颜色和显示时长。
+       - 每帧更新文本的透明度，实现渐隐效果。
+       - 将文本渲染到指定的显示表面上。
+    """
     def __init__(self, font, dim, pos):
-        self.font = font
-        self.dim = dim
-        self.pos = pos
-        self.seconds_left = 0
-        self.surface = pygame.Surface(self.dim)
+        """
+        初始化渐隐文本对象。
+
+        参数:
+        - font: 字体对象，用于渲染文本。
+        - dim: 文本表面的尺寸 (宽度, 高度)。
+        - pos: 文本在屏幕上的位置 (x, y)。
+        """
+        self.font = font       # 字体对象
+        self.dim = dim         # 文本表面的尺寸
+        self.pos = pos         # 文本在屏幕上的位置
+        self.seconds_left = 0  # 剩余显示时间（秒）
+        self.surface = pygame.Surface(self.dim)  # 创建一个与指定尺寸匹配的表面
 
     def set_text(self, text, color=(255, 255, 255), seconds=2.0):
-        text_texture = self.font.render(text, True, color)
-        self.surface = pygame.Surface(self.dim)
-        self.seconds_left = seconds
-        self.surface.fill((0, 0, 0, 0))
-        self.surface.blit(text_texture, (10, 11))
+        """
+        设置要显示的文本内容、颜色和显示时长。
+
+        参数:
+        - text: 要显示的文本字符串。
+        - color: 文本颜色，默认为白色 (255, 255, 255)。
+        - seconds: 文本显示的时长，默认为2秒。
+        """
+        text_texture = self.font.render(text, True, color)  # 渲染文本到纹理
+        self.surface = pygame.Surface(self.dim)             # 创建一个新的表面
+        self.seconds_left = seconds                         # 设置剩余显示时间
+        self.surface.fill((0, 0, 0, 0))                     # 用透明黑色填充表面
+        self.surface.blit(text_texture, (10, 11))           # 将文本纹理绘制到表面，偏移 (10, 11)
 
     def tick(self, _, clock):
-        delta_seconds = 1e-3 * clock.get_time()
-        self.seconds_left = max(0.0, self.seconds_left - delta_seconds)
-        self.surface.set_alpha(500.0 * self.seconds_left)
+        """
+        更新渐隐效果。
+
+        每帧调用此方法以减少剩余显示时间，并根据剩余时间调整文本的透明度。
+
+        参数:
+        - _: 未使用的参数（占位符）。
+        - clock: 时钟对象，用于获取时间间隔。
+        """
+        delta_seconds = 1e-3 * clock.get_time()                          # 获取自上次调用以来的时间（秒）
+        self.seconds_left = max(0.0, self.seconds_left - delta_seconds)  # 减少剩余时间
+        self.surface.set_alpha(500.0 * self.seconds_left)                # 根据剩余时间调整透明度
 
     def render(self, display):
-        display.blit(self.surface, self.pos)
+        """
+        将渐隐文本渲染到指定的显示表面上。
+
+        参数:
+        - display: 显示表面，用于绘制文本。
+        """
+        display.blit(self.surface, self.pos)  # 将文本表面绘制到指定位置
 
 
 # ==============================================================================
@@ -1153,9 +1208,15 @@ class RadarSensor(object):
         self.velocity_range = 7.5 # m/s
         world = self._parent.get_world()
         self.debug = world.debug
+        
+        # 从蓝图库中查找雷达传感器蓝图
         bp = world.get_blueprint_library().find('sensor.other.radar')
+        
+        # 设置雷达属性
         bp.set_attribute('horizontal_fov', str(35))
         bp.set_attribute('vertical_fov', str(20))
+
+        # 在世界中生成雷达传感器实例
         self.sensor = world.spawn_actor(
             bp,
             carla.Transform(
@@ -1165,7 +1226,7 @@ class RadarSensor(object):
         # We need a weak reference to self to avoid circular reference.
         weak_self = weakref.ref(self)
         self.sensor.listen(
-            lambda radar_data: RadarSensor._Radar_callback(weak_self, radar_data))
+            lambda radar_data: RadarSensor._Radar_callback(weak_self, radar_data))# 使用lambda表达式传递弱引用和雷达数据
         
 #定义了一个雷达传感器的回调函数 _Radar_callback，用于处理和可视化 Carla 模拟器中雷达数据
     @staticmethod
@@ -1220,8 +1281,9 @@ class CameraManager(object):
         bound_x = 0.5 + self._parent.bounding_box.extent.x
         bound_y = 0.5 + self._parent.bounding_box.extent.y
         bound_z = 0.5 + self._parent.bounding_box.extent.z
-        Attachment = carla.AttachmentType
+        Attachment = carla.AttachmentType # 导入CARLA的附件类型枚举
 
+        # 判断父级actor是否为行人
         if not self._parent.type_id.startswith("walker.pedestrian"):
             self._camera_transforms = [
                 (carla.Transform(carla.Location(x=-2.0*bound_x, y=+0.0*bound_y, z=2.0*bound_z), carla.Rotation(pitch=8.0)), Attachment.SpringArmGhost),
@@ -1237,7 +1299,10 @@ class CameraManager(object):
                 (carla.Transform(carla.Location(x=-4.0, z=2.0), carla.Rotation(pitch=6.0)), Attachment.SpringArmGhost),
                 (carla.Transform(carla.Location(x=0, y=-2.5, z=-0.0), carla.Rotation(yaw=90.0)), Attachment.Rigid)]
 
+        # 初始化当前传感器变换索引
         self.transform_index = 1
+        
+        # 可用的传感器配置列表
         self.sensors = [
             ['sensor.camera.rgb', cc.Raw, 'Camera RGB', {}],
             ['sensor.camera.depth', cc.Raw, 'Camera Depth (Raw)', {}],
@@ -1258,9 +1323,15 @@ class CameraManager(object):
             ['sensor.camera.normals', cc.Raw, 'Camera Normals', {}],
         ]
         world = self._parent.get_world()
+        
+        # 获取世界的蓝图库
         bp_library = world.get_blueprint_library()
+
+        # 遍历之前定义的传感器配置列表
         for item in self.sensors:
             bp = bp_library.find(item[0])
+            
+            # 判断是否为摄像头类传感器
             if item[0].startswith('sensor.camera'):
                 bp.set_attribute('image_size_x', str(hud.dim[0]))
                 bp.set_attribute('image_size_y', str(hud.dim[1]))
@@ -1268,6 +1339,8 @@ class CameraManager(object):
                     bp.set_attribute('gamma', str(gamma_correction))
                 for attr_name, attr_value in item[3].items():
                     bp.set_attribute(attr_name, attr_value)
+
+            # 判断是否为激光雷达类传感器
             elif item[0].startswith('sensor.lidar'):
                 self.lidar_range = 50
 
@@ -1316,8 +1389,9 @@ class CameraManager(object):
             display.blit(self.surface, (0, 0))
 
     @staticmethod
+    # 解析和处理来自CARLA各种传感器的图像数据
     def _parse_image(weak_self, image):
-        self = weak_self()
+        self = weak_self() # 从弱引用中获取实际对象
         if not self:
             return
         if self.sensors[self.index][0].startswith('sensor.lidar'):
@@ -1333,7 +1407,7 @@ class CameraManager(object):
             lidar_img = np.zeros((lidar_img_size), dtype=np.uint8)
             lidar_img[tuple(lidar_data.T)] = (255, 255, 255)
             self.surface = pygame.surfarray.make_surface(lidar_img)
-        elif self.sensors[self.index][0].startswith('sensor.camera.dvs'):
+        elif self.sensors[self.index][0].startswith('sensor.camera.dvs'):# 处理动态视觉传感器(DVS)事件数据
             # Example of converting the raw_data from a carla.DVSEventArray
             # sensor into a NumPy array and using it as an image
             dvs_events = np.frombuffer(image.raw_data, dtype=np.dtype([
@@ -1342,7 +1416,7 @@ class CameraManager(object):
             # Blue is positive, red is negative
             dvs_img[dvs_events[:]['y'], dvs_events[:]['x'], dvs_events[:]['pol'] * 2] = 255
             self.surface = pygame.surfarray.make_surface(dvs_img.swapaxes(0, 1))
-        elif self.sensors[self.index][0].startswith('sensor.camera.optical_flow'):
+        elif self.sensors[self.index][0].startswith('sensor.camera.optical_flow'):# 处理光流数据
             image = image.get_color_coded_flow()
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (image.height, image.width, 4))
